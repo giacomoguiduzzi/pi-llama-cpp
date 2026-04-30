@@ -3,10 +3,15 @@ import { DEFAULT_CTX } from "../constants";
 import { rpc } from "../tools/retriever";
 import { Status } from "../enums/status";
 import { BaseModel } from "./baseModel";
+import { Mode } from "../enums/mode";
 
 export class SingleModel extends BaseModel {
   constructor(private readonly model: ISingleModel) {
     super();
+  }
+
+  get mode(): Mode {
+    return Mode.SINGLE;
   }
 
   get id(): string {

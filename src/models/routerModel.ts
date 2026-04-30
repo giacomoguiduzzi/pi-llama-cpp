@@ -3,10 +3,15 @@ import { DEFAULT_CTX } from "../constants";
 import { rpc } from "../tools/retriever";
 import { Status } from "../enums/status";
 import { BaseModel } from "./baseModel";
+import { Mode } from "../enums/mode";
 
 export class RouterModel extends BaseModel {
   constructor(private readonly model: IRouterModel) {
     super();
+  }
+
+  get mode(): Mode {
+    return Mode.ROUTER;
   }
 
   get id(): string {
