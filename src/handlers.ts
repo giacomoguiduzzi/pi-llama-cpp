@@ -28,7 +28,12 @@ const modelSelectionHandler = async (
 
   // Define the actions that the user can do
   const allActions = {
-    [Status.LOADED]: [Actions.SWITCH, Actions.UNLOAD, Actions.CANCEL],
+    [Status.LOADED]: [
+      Actions.SWITCH,
+      Actions.UNLOAD,
+      Actions.INFO,
+      Actions.CANCEL,
+    ],
     [Status.LOADING]: [Actions.CANCEL],
     [Status.FAILED]: [Actions.RETRY, Actions.CANCEL],
     [Status.UNLOADED]: [Actions.SWITCH, Actions.CANCEL],
@@ -60,6 +65,13 @@ export const modelsCommandHandler = async (
   // Detect the model
   const { action, model } = event;
 
+  // Action: Info
+  if (action === Actions.INFO) {
+    const info = await model.getInfo();
+    ctx.ui.notify(`${info}`, "info");
+    return;
+  }
+
   // Action: Unload
   if (action === Actions.UNLOAD) {
     await model.unload();
@@ -74,7 +86,7 @@ export const modelsCommandHandler = async (
     const onSuccess = async () => {
       const piModel = ctx.modelRegistry.find(PROVIDER_ID, model.id);
       if (!piModel) {
-        throw new Error(`Cannot find model ${model.name} (${model.id}) in pi registry`);
+        throw new Error(`Cannot find model ${model.name} in pi registry`);
       }
 
       await pi.setModel(piModel);

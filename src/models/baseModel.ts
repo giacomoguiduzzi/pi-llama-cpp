@@ -43,11 +43,29 @@ export abstract class BaseModel {
   abstract getContextSize(): Promise<number>;
 
   /**
-   * Returns the corresponding label of our load status
+   * Sets up a label for the model selection screen
+   * @returns A label structured as "<icon> <name>"
    */
   async getLabel(): Promise<string> {
     const status = await this.getStatus();
     return `${this.labelIcons[status]} ${this.name}`;
+  }
+
+  /**
+   * Returns a human-readable information about the model
+   * @returns A string with the model information
+   */
+  async getInfo(): Promise<string> {
+    const messages = [
+      `ID           : ${this.id}`,
+      `Model        : ${this.name}`,
+      `Reasoning    : ${this.reasoning}`,
+      `Capabilities : ${this.capabilities.join(", ")}`,
+      `Context size : ${await this.getContextSize()}`,
+    ];
+
+    const response = `${messages.join("\n")}\n`;
+    return response;
   }
 
   /**

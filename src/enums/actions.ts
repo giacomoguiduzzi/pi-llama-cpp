@@ -4,5 +4,6 @@ export enum Actions {
   RETRY = "Retry",
   LOAD = "Load & switch",
   UNLOAD = "Unload",
+  INFO = "Info",
   CANCEL = "Cancel",
 }
