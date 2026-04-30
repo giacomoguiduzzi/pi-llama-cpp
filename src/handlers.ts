@@ -28,9 +28,9 @@ const modelSelectionHandler = async (
 
   // Define the actions that the user can do
   const allActions = {
-    [Status.LOADED]: [Actions.UNLOAD, Actions.CANCEL],
+    [Status.LOADED]: [Actions.SWITCH, Actions.UNLOAD, Actions.CANCEL],
     [Status.LOADING]: [Actions.CANCEL],
-    [Status.FAILED]: [Actions.SWITCH, Actions.CANCEL],
+    [Status.FAILED]: [Actions.RETRY, Actions.CANCEL],
     [Status.UNLOADED]: [Actions.SWITCH, Actions.CANCEL],
   };
 
@@ -60,17 +60,17 @@ export const modelsCommandHandler = async (
   // Detect the model
   const { action, model } = event;
 
-  // Execute the selected action
+  // Action: Unload
   if (action === Actions.UNLOAD) {
     await model.unload();
     ctx.ui.notify(`Unloaded ${model.id}`, "info");
-  } else {
-    const status = await model.getStatus();
-    if (status === Status.LOADED) return;
+    return;
+  }
 
+  // Actions: Switch/Retry
+  if ([Actions.SWITCH, Actions.RETRY].includes(action)) {
     ctx.ui.notify(`Loading ${model.id}...`, "info");
 
-    // Load the model without blocking the UI
     const onSuccess = async () => {
       const piModel = ctx.modelRegistry.find(PROVIDER_NAME, model.id);
       if (!piModel) {
@@ -86,6 +86,7 @@ export const modelsCommandHandler = async (
       ctx.ui.notify(message, "error");
     };
 
+    // Load the model without blocking the UI
     model.load().then(onSuccess).catch(onFailure);
   }
 };
