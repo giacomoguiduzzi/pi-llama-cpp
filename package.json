@@ -23,10 +23,16 @@
       "./src/index.ts"
     ]
   },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-organize-imports"
+    ]
+  },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "prettier-plugin-organize-imports": "^4.3.0"
   }
 }
