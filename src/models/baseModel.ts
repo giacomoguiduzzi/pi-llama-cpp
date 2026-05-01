@@ -9,6 +9,7 @@ export abstract class BaseModel {
     loaded: Status.LOADED,
     loading: Status.LOADING,
     failed: Status.FAILED,
+    sleeping: Status.SLEEPING,
     unloaded: Status.UNLOADED,
   };
 
@@ -16,6 +17,7 @@ export abstract class BaseModel {
     [Status.LOADED]: "🟢",
     [Status.LOADING]: "🟡",
     [Status.FAILED]: "🔴",
+    [Status.SLEEPING]: "🔵",
     [Status.UNLOADED]: "⚪",
   };
 

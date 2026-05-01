@@ -3,5 +3,6 @@ export enum Status {
   LOADED = "loaded",
   LOADING = "loading",
   FAILED = "failed",
+  SLEEPING = "sleeping",
   UNLOADED = "unloaded",
 }

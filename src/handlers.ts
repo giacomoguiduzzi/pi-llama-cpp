@@ -28,18 +28,20 @@ const modelSelectionHandler = async (
   const model = models[idx];
 
   // Router mode actions
-  const routerModeActions = {
+  const routerModeActions: Record<Status, Array<Action>> = {
     [Status.LOADED]: [Action.SWITCH, Action.UNLOAD, Action.INFO, Action.CANCEL],
     [Status.LOADING]: [Action.CANCEL],
     [Status.FAILED]: [Action.RETRY, Action.CANCEL],
+    [Status.SLEEPING]: [Action.UNLOAD, Action.INFO, Action.CANCEL],
     [Status.UNLOADED]: [Action.LOAD, Action.CANCEL],
   };
 
   // Single mode actions (more limited)
-  const singleModeActions = {
+  const singleModeActions: Record<Status, Array<Action>> = {
     [Status.LOADED]: [Action.INFO, Action.CANCEL],
     [Status.LOADING]: [Action.CANCEL],
     [Status.FAILED]: [Action.CANCEL],
+    [Status.SLEEPING]: [Action.CANCEL],
     [Status.UNLOADED]: [Action.CANCEL],
   };
 
@@ -90,13 +92,18 @@ export const modelsCommandHandler = async (
   }
 
   // Actions: Load/Switch/Retry
-  if ([Action.LOAD, Action.SWITCH, Action.RETRY].includes(action)) {
+  const loadActions = [Action.LOAD, Action.SWITCH, Action.RETRY];
+  if (loadActions.includes(action)) {
     ctx.ui.notify(`Loading ${model.name}...`, "info");
 
     const onSuccess = async () => {
       const piModel = ctx.modelRegistry.find(PROVIDER_ID, model.id);
       if (!piModel) {
         throw new Error(`Cannot find model ${model.name} in pi registry`);
+      }
+
+      if ((await model.getStatus()) === Status.FAILED) {
+        throw new Error("Failed to load model");
       }
 
       await pi.setModel(piModel);

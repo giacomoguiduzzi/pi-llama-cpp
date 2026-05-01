@@ -1,9 +1,9 @@
-import { IRouterModel } from "../interfaces/IRouterModel";
 import { DEFAULT_CTX } from "../constants";
-import { rpc } from "../tools/retriever";
-import { Status } from "../enums/status";
-import { BaseModel } from "./baseModel";
 import { Mode } from "../enums/mode";
+import { Status } from "../enums/status";
+import { IRouterModel } from "../interfaces/IRouterModel";
+import { rpc } from "../tools/retriever";
+import { BaseModel } from "./baseModel";
 
 export class RouterModel extends BaseModel {
   constructor(private readonly model: IRouterModel) {
@@ -30,12 +30,16 @@ export class RouterModel extends BaseModel {
   async getStatus(): Promise<Status> {
     const { data } = await rpc<{ data: IRouterModel[] }>("/models");
     const model = data.find((m) => m.id === this.id);
-    if (!model) return Status.UNLOADED;
+    if (!model) return Status.FAILED;
 
-    const response = this.statusMapper[model.status.value];
-    if (!response) return Status.UNLOADED;
+    const status = this.statusMapper[model.status.value];
+    if (status === Status.UNLOADED) {
+      if (this.model.status.failed) return Status.FAILED;
 
-    return response;
+      return Status.UNLOADED;
+    }
+
+    return status;
   }
 
   async getContextSize(): Promise<number> {
