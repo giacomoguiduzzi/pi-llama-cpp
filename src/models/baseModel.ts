@@ -2,9 +2,12 @@ import type { ProviderModelConfig } from "@mariozechner/pi-coding-agent";
 import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
+import { DataProperty } from "../interfaces/endpoints/models";
 import { rpc } from "../tools/retriever";
 
 export abstract class BaseModel {
+  constructor(protected readonly model: DataProperty) {}
+
   protected readonly statusMapper: Record<string, Status> = {
     loaded: Status.LOADED,
     loading: Status.LOADING,
@@ -23,9 +26,13 @@ export abstract class BaseModel {
 
   abstract get mode(): Mode;
 
-  abstract get id(): string;
+  get id(): string {
+    return this.model.id;
+  }
 
-  abstract get name(): string;
+  get name(): string {
+    return this.model.aliases?.[0] || this.model.id;
+  }
 
   get reasoning(): boolean {
     // We don't have a way to detect this, so we'll fallback to true

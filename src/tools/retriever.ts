@@ -1,5 +1,5 @@
-import { IRouterModel } from "../interfaces/IRouterModel";
-import { ISingleModel } from "../interfaces/ISingleModel";
+import { HealthEndpoint } from "../interfaces/endpoints/health";
+import { ModelsEndpoint } from "../interfaces/endpoints/models";
 import { BaseModel } from "../models/baseModel";
 import { RouterModel } from "../models/routerModel";
 import { SingleModel } from "../models/singleModel";
@@ -11,7 +11,7 @@ import { resolveApiKey, resolveUrl } from "./resolver";
  */
 export const isServerReady = async (): Promise<boolean> => {
   try {
-    const { status } = await rpc<{ status: string }>("/health");
+    const { status } = await rpc<HealthEndpoint>("/health");
     return status === "ok";
   } catch {
     return false;
@@ -59,13 +59,11 @@ export const rpc = async <T>(
  * @returns The list of models
  */
 export const listModels = async (): Promise<BaseModel[]> => {
-  const { models, data } = await rpc<{
-    models?: ISingleModel[];
-    data: IRouterModel[];
-  }>("/models");
+  const { models, data } = await rpc<ModelsEndpoint>("/models");
 
   if (models) {
-    return models.map((m) => new SingleModel(m));
+    const [extra] = models;
+    return data.map((m) => new SingleModel(m, extra));
   }
 
   const response = data
