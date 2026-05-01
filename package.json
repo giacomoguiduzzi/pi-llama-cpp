@@ -1,6 +1,6 @@
 {
   "name": "pi-llama-cpp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Pi extension for llama.cpp integration. Supports both router and single modes",
   "keywords": [
     "pi",
