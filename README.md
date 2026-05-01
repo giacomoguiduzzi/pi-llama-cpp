@@ -18,8 +18,12 @@ A [Pi Coding Agent](https://pi.dev/) extension that integrates with a running [l
 | 🟢 | Loaded | Model is active and ready to use |
 | 🟡 | Loading | Model is currently being loaded |
 | 🔴 | Failed | Model failed to load |
-| 🔵 | Sleeping | Model is loaded but inactive (router mode) |
+| 🔵 | Sleeping | Model is available, but inactive |
 | ⚪ | Unloaded | Model is not loaded on the server |
+
+> **Note**: The `Sleeping` status only shows when you start your server with `llama-server --sleep-idle-seconds <n> ...`.
+This is a **llama.cpp server flag** that tells the server to put idle models to sleep after `n` seconds.
+The model awakens automatically when you send a message.
 
 ## Installation
 
@@ -65,6 +69,8 @@ If your llama.cpp server requires authentication, use `/login` in Pi, select the
 
 Alternatively, configure the API key in `~/.pi/agent/auth.json` using the provider ID `llama-server`:
 
+> **Note**: The provider is displayed as **Llama.cpp** in the Pi UI, but its internal identifier is `llama-server` — use this ID when configuring `auth.json` or other programmatic access.
+
 ```json
 {
   "llama-server": {
@@ -86,13 +92,16 @@ Make sure your llama.cpp server is running with the appropriate flags.
 llama-server --models-preset path/to/presets.ini ...
 ```
 
-The extension reads the context size from the preset file using the `ctx-size` and/or `fit-ctx` keys.
-
 - For single-model mode, start the server with:
 
 ```bash
-llama-server --model path/to/model.gguf --ctx-size 128000 ...
+llama-server --model path/to/model.gguf ...
 ```
+
+The extension determines the context size as follows:
+- **Router mode** — reads from the preset file's `ctx-size` and/or `fit-ctx` keys
+- **Single mode** — reads from the `/slots` endpoint (stores it in cache afterwards)
+- Falls back to `128000` if not available
 
 ### Commands
 
@@ -100,7 +109,7 @@ llama-server --model path/to/model.gguf --ctx-size 128000 ...
 | --------- | ------------------------------------------------------------------------------------------ |
 | `/models` | Browse your models with live status. Select a model to load, switch, or unload it.         |
 
-> **Note:** When the llama.cpp server is unreachable, `/models` is still available but displays an error notification with the configured server URL.
+> **Note:** When the llama.cpp server is unreachable, `/models` is still available but shows the description `Llama.cpp models (offline)` and displays an error notification with the configured server URL.
 
 ### Model Actions
 
@@ -117,13 +126,20 @@ When browsing models via the `/models` command, you can:
 
 ### Model Selection Event
 
-When Pi switches models (via `model_select`), the extension automatically loads the selected model on the llama.cpp server. This keeps the server in sync with the active model in Pi.
+When you switch models via Pi's model picker (instead of using the `/models` command), the extension listens for the `model_select` event, which also loads the requested model before the conversation begins.
+
+This keeps the server in sync with the active model in Pi, regardless of how the switch was initiated — you don't need to manually load models before using them.
+
+### Loading Models
+
+When you trigger a load, switch, or retry action, the extension polls the server to track progress. If a model takes longer than **60 seconds** to load, the polling times out with an error.
+> **Note:** The timeout is only for the polling. The model might still be loading.
 
 ### Model Configuration
 
 Each model exposed to Pi includes the following defaults:
 
-- **`maxTokens`** — `16384` (maximum tokens per response)
+- **`maxTokens`** — `32000` (maximum possible tokens per response according to Pi's source code)
 - **`reasoning`** — `true` (assumed, as llama.cpp's `/models` endpoint does not expose it)
 - **`cost`** — all zero (local model)
 
