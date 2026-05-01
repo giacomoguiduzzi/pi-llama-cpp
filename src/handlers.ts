@@ -2,10 +2,11 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
 } from "@mariozechner/pi-coding-agent";
+import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
+import { Action } from "./enums/action";
+import { Mode } from "./enums/mode";
 import { Status } from "./enums/status";
 import { BaseModel } from "./models/baseModel";
-import { Actions } from "./enums/actions";
-import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
 
 /**
  * Defines a handler when llama-server is running
@@ -15,7 +16,7 @@ import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
 const modelSelectionHandler = async (
   ctx: ExtensionCommandContext,
   models: BaseModel[],
-): Promise<{ action: Actions; model: BaseModel } | null> => {
+): Promise<{ action: Action; model: BaseModel } | null> => {
   // Setup the labels
   const labels = await Promise.all(models.map((m) => m.getLabel()));
 
@@ -26,24 +27,30 @@ const modelSelectionHandler = async (
   const idx = labels.indexOf(choice);
   const model = models[idx];
 
-  // Define the actions that the user can do
-  const allActions = {
-    [Status.LOADED]: [
-      Actions.SWITCH,
-      Actions.UNLOAD,
-      Actions.INFO,
-      Actions.CANCEL,
-    ],
-    [Status.LOADING]: [Actions.CANCEL],
-    [Status.FAILED]: [Actions.RETRY, Actions.CANCEL],
-    [Status.UNLOADED]: [Actions.SWITCH, Actions.CANCEL],
+  // Router mode actions
+  const routerModeActions = {
+    [Status.LOADED]: [Action.SWITCH, Action.UNLOAD, Action.INFO, Action.CANCEL],
+    [Status.LOADING]: [Action.CANCEL],
+    [Status.FAILED]: [Action.RETRY, Action.CANCEL],
+    [Status.UNLOADED]: [Action.LOAD, Action.CANCEL],
   };
+
+  // Single mode actions (more limited)
+  const singleModeActions = {
+    [Status.LOADED]: [Action.INFO, Action.CANCEL],
+    [Status.LOADING]: [Action.CANCEL],
+    [Status.FAILED]: [Action.CANCEL],
+    [Status.UNLOADED]: [Action.CANCEL],
+  };
+
+  // Define the actions that the user can do
+  const allActions =
+    model.mode === Mode.ROUTER ? routerModeActions : singleModeActions;
 
   const status = await model.getStatus();
   const actions = allActions[status];
 
-  const action = (await ctx.ui.select(`${model.name}`, actions)) as Actions;
-  if (!action || action === Actions.CANCEL) return null;
+  const action = (await ctx.ui.select(`${model.name}`, actions)) as Action;
 
   // Send the selected action with the corresponding model
   return { action, model };
@@ -65,22 +72,25 @@ export const modelsCommandHandler = async (
   // Detect the model
   const { action, model } = event;
 
+  // Action: Cancel
+  if (!action || action === Action.CANCEL) return;
+
   // Action: Info
-  if (action === Actions.INFO) {
+  if (action === Action.INFO) {
     const info = await model.getInfo();
     ctx.ui.notify(`${info}`, "info");
     return;
   }
 
   // Action: Unload
-  if (action === Actions.UNLOAD) {
+  if (action === Action.UNLOAD) {
     await model.unload();
     ctx.ui.notify(`Unloaded ${model.name}`, "info");
     return;
   }
 
-  // Actions: Switch/Retry
-  if ([Actions.SWITCH, Actions.RETRY].includes(action)) {
+  // Actions: Load/Switch/Retry
+  if ([Action.LOAD, Action.SWITCH, Action.RETRY].includes(action)) {
     ctx.ui.notify(`Loading ${model.name}...`, "info");
 
     const onSuccess = async () => {
