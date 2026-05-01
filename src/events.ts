@@ -1,7 +1,7 @@
 import { ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { PROVIDER_NAME } from "./constants";
-import { listModels } from "./tools/retriever";
 import { ModelSelectEvent } from "./interfaces/IModelSelectEvent";
+import { listModels } from "./tools/retriever";
 
 /**
  * Reacts to a new model event triggered by Pi

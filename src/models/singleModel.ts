@@ -1,9 +1,9 @@
-import { ISingleModel } from "../interfaces/ISingleModel";
 import { DEFAULT_CTX } from "../constants";
-import { rpc } from "../tools/retriever";
-import { Status } from "../enums/status";
-import { BaseModel } from "./baseModel";
 import { Mode } from "../enums/mode";
+import { Status } from "../enums/status";
+import { ISingleModel } from "../interfaces/ISingleModel";
+import { rpc } from "../tools/retriever";
+import { BaseModel } from "./baseModel";
 
 export class SingleModel extends BaseModel {
   constructor(private readonly model: ISingleModel) {

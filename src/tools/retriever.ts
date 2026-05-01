@@ -1,8 +1,8 @@
-import { ISingleModel } from "../interfaces/ISingleModel";
 import { IRouterModel } from "../interfaces/IRouterModel";
-import { SingleModel } from "../models/singleModel";
-import { RouterModel } from "../models/routerModel";
+import { ISingleModel } from "../interfaces/ISingleModel";
 import { BaseModel } from "../models/baseModel";
+import { RouterModel } from "../models/routerModel";
+import { SingleModel } from "../models/singleModel";
 import { resolveApiKey, resolveUrl } from "./resolver";
 
 /**

@@ -1,8 +1,8 @@
 import type { ProviderModelConfig } from "@mariozechner/pi-coding-agent";
 import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
+import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { rpc } from "../tools/retriever";
-import { Mode } from "../enums/mode";
 
 export abstract class BaseModel {
   protected readonly statusMapper: Record<string, Status> = {
