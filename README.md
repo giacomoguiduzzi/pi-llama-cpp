@@ -5,7 +5,16 @@ A [Pi Coding Agent](https://pi.dev/) extension that integrates with a running [l
 ## Features
 
 - **Auto-detect models** — discovers all models available on your running llama.cpp server
-- **Live status indicators** — see which models are loaded, loading, failed, or unloaded with color-coded icons
+- **Live status indicators** — see which models are loaded, loading, failed, sleeping, or unloaded with color-coded icons
+
+  | Icon | Status | Description |
+  |------|--------|-------------|
+  | 🟢 | Loaded | Model is active and ready to use |
+  | 🟡 | Loading | Model is currently being loaded |
+  | 🔴 | Failed | Model failed to load |
+  | 🔵 | Sleeping | Model is loaded but inactive (router mode) |
+  | ⚪ | Unloaded | Model is not loaded on the server |
+
 - **Load / unload / switch** — manage models directly from the Pi command palette
 - **Multi-model router support** — works with both single-model and multi-model llama.cpp server configurations
 - **Image model support** — detects multimodal models automatically
@@ -51,15 +60,15 @@ The extension resolves the llama.cpp server URL using the following priority ord
 
 ### API Key
 
-If your llama.cpp server requires authentication, use `/login` in Pi, select the "API key" option, and choose the `llama-server` provider.
+If your llama.cpp server requires authentication, use `/login` in Pi, select the "API key" option, and choose the `Llama.cpp` provider.
 
 Alternatively, configure the API key in `~/.pi/agent/auth.json`:
 
 ```json
 {
   "llama-server": {
-    "type": "bearer",
-    "key": "your-api-key-here"
+    "type": "api_key",
+    "key": "<your-api-key-here>"
   }
 }
 ```
@@ -86,7 +95,7 @@ llama-server --model path/to/model.gguf --ctx-size 128000 ...
 
 | Command   | Description                                                                                |
 | --------- | ------------------------------------------------------------------------------------------ |
-| `/models` | Browse llama-server models with live status. Select a model to load, switch, or unload it. |
+| `/models` | Browse your models with live status. Select a model to load, switch, or unload it.         |
 
 ### Model Actions
 
@@ -95,10 +104,13 @@ When browsing models via the `/models` command, you can:
 - **Load & switch** — Load an unloaded model and switch to it
 - **Switch model** — Switch to a model that is already loaded
 - **Unload** — Unload a loaded model to free memory
+- **Retry** — Retry loading a failed model
+- **Info** — View model details (ID, capabilities, context size)
+- **Cancel** — Cancel the current operation
 
 ### Model Selection Event
 
-When Pi switches models (e.g., via `model_select`), the extension automatically loads the selected model on the llama.cpp server. This keeps the server in sync with the active model in Pi.
+When Pi switches models (via `model_select`), the extension automatically loads the selected model on the llama.cpp server. This keeps the server in sync with the active model in Pi.
 
 ### Model Configuration
 
