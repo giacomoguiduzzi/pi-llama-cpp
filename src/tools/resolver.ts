@@ -1,7 +1,7 @@
-import { DEFAULT_LLAMA_SERVER_URL, PROVIDER_ID } from "../constants";
-import { access, readFile, constants } from "node:fs/promises";
+import { access, constants, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { IAuthFile } from "../interfaces/IAuthFile";
+import { DEFAULT_LLAMA_SERVER_URL, PROVIDER_ID } from "../constants";
+import { IAuth, IAuthFile } from "../interfaces/IAuthFile";
 
 // The URL is detected once, to reuse forever
 let resolvedUrl: string | undefined;
@@ -42,10 +42,10 @@ const readContents = async <T>(filePath: string): Promise<T | null> => {
  * @param key Key to extract from the parsed JSON
  * @returns The string value, or null if file/key missing or invalid
  */
-const readConfigValue = async <T>(
+const readConfigValue = async <T, U>(
   filePath: string,
   key: string,
-): Promise<string | null> => {
+): Promise<U> => {
   const cfg = await readContents<T>(filePath);
   return (cfg as Record<string, any>)?.[key] || null;
 };
@@ -60,8 +60,11 @@ export const resolveApiKey = async (): Promise<string> => {
   const authPath = join(process.env.HOME || ".", ".pi", "agent", "auth.json");
   if (!(await fileExists(authPath))) return placeholder;
 
-  const response = await readConfigValue<IAuthFile>(authPath, PROVIDER_ID);
-  return response ?? placeholder;
+  const cfg = await readConfigValue<IAuthFile, IAuth | null>(
+    authPath,
+    PROVIDER_ID,
+  );
+  return cfg?.key ?? placeholder;
 };
 
 /**
@@ -77,7 +80,11 @@ const resolveGlobalUrl = async (): Promise<string | null> => {
   );
 
   if (!(await fileExists(globalPath))) return null;
-  return readConfigValue<Record<string, string>>(globalPath, "llamaServerUrl");
+
+  return readConfigValue<Record<string, string>, string>(
+    globalPath,
+    "llamaServerUrl",
+  );
 };
 
 /**
@@ -89,7 +96,7 @@ const resolveProjectUrl = async (cwd: string): Promise<string | null> => {
   const projectPath = join(cwd, ".pi", "llama-server.json");
 
   if (!(await fileExists(projectPath))) return null;
-  return readConfigValue<Record<string, string>>(projectPath, "url");
+  return readConfigValue<Record<string, string>, string>(projectPath, "url");
 };
 
 /**
