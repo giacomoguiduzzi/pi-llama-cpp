@@ -8,6 +8,8 @@ import { rpc } from "../tools/retriever";
 import { BaseModel } from "./baseModel";
 
 export class SingleModel extends BaseModel {
+  private contextSize?: number;
+
   constructor(
     protected readonly model: DataProperty,
     private readonly extra: ModelProperty,
@@ -33,9 +35,14 @@ export class SingleModel extends BaseModel {
   }
 
   async getContextSize(): Promise<number> {
+    // Avoid calling the endpoint if we already have the value
+    if (this.contextSize) return this.contextSize;
+
     try {
       const [{ n_ctx }] = await rpc<SlotsEndpoint[]>("/slots");
-      return n_ctx;
+      this.contextSize = n_ctx;
+
+      return this.contextSize;
     } catch {
       return DEFAULT_CTX;
     }
