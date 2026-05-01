@@ -74,6 +74,7 @@ export abstract class BaseModel {
       `Reasoning    : ${this.reasoning}`,
       `Capabilities : ${this.capabilities.join(", ")}`,
       `Context size : ${await this.getContextSize()}`,
+      `Status       : ${await this.getStatus()}`,
     ];
 
     const response = `${messages.join("\n")}\n`;
