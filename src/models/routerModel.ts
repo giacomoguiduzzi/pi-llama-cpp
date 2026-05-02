@@ -15,7 +15,7 @@ export class RouterModel extends BaseModel {
   }
 
   get capabilities(): ["text"] | ["image"] {
-    const hasImage = this.model.status!.args?.includes("--mmproj") ?? false;
+    const hasImage = this.model.status?.args?.includes("--mmproj") ?? false;
     return hasImage ? ["image"] : ["text"];
   }
 
