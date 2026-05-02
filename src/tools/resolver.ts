@@ -1,6 +1,10 @@
 import { access, constants, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DEFAULT_LLAMA_SERVER_URL, PROVIDER_ID } from "../constants";
+import {
+  API_KEY_PLACEHOLDER,
+  DEFAULT_LLAMA_SERVER_URL,
+  PROVIDER_ID,
+} from "../constants";
 import { Auth, AuthFile } from "../interfaces/auth";
 
 // The URL is detected once, to reuse forever
@@ -55,16 +59,14 @@ const readConfigValue = async <T, U>(
  * @returns The API key, as defined by the auth.json file
  */
 export const resolveApiKey = async (): Promise<string> => {
-  const placeholder = "sk-placeholder";
-
   const authPath = join(process.env.HOME || ".", ".pi", "agent", "auth.json");
-  if (!(await fileExists(authPath))) return placeholder;
+  if (!(await fileExists(authPath))) return API_KEY_PLACEHOLDER;
 
   const cfg = await readConfigValue<AuthFile, Auth | null>(
     authPath,
     PROVIDER_ID,
   );
-  return cfg?.key ?? placeholder;
+  return cfg?.key ?? API_KEY_PLACEHOLDER;
 };
 
 /**
