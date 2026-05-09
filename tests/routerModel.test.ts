@@ -1,7 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Mode } from "../src/enums/mode";
 import { DataProperty } from "../src/interfaces/endpoints/models";
 import { RouterModel } from "../src/models/routerModel";
+
+// Mock the retriever module before importing anything that depends on it
+const mockRpc = vi.fn();
+
+vi.mock("../src/tools/retriever", () => ({
+  rpc: (...args: unknown[]) => mockRpc(...args),
+  isServerReady: vi.fn(),
+  listModels: vi.fn(),
+}));
 
 // Helper to create a mock DataProperty
 const createModel = (overrides: Partial<DataProperty> = {}): DataProperty => ({
@@ -11,6 +20,7 @@ const createModel = (overrides: Partial<DataProperty> = {}): DataProperty => ({
   object: "model",
   owned_by: "test",
   created: Date.now(),
+  status: { value: "loaded", args: [], preset: "default", failed: false },
   ...overrides,
 });
 
@@ -99,7 +109,26 @@ describe("RouterModel context size extraction", () => {
     expect(extractFrom("--ctx-size")).toBeNull();
   });
 
-  it("should prefer --ctx-size over --fit-ctx", async () => {
+  it("should prefer --ctx-size over --fit-ctx when loaded", async () => {
+    // First call: getStatus() -> /models
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "loaded", args: ["--model", "gguf", "--ctx-size", "4096", "--fit-ctx", "8192"], preset: "default" },
+        },
+      ],
+    });
+    // Second call: super.getContextSize() -> /models with meta.n_ctx
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          meta: { n_ctx: 4096 },
+        },
+      ],
+    });
+
     const model = new RouterModel(
       createModel({
         status: {
@@ -114,7 +143,25 @@ describe("RouterModel context size extraction", () => {
     expect(ctxSize).toBe(4096);
   });
 
-  it("should return DEFAULT_CTX when no context size args are present", async () => {
+  it("should return DEFAULT_CTX when no context size args are present and loaded", async () => {
+    // First call: getStatus() -> /models
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "loaded", args: ["--model", "gguf"], preset: "default" },
+        },
+      ],
+    });
+    // Second call: super.getContextSize() -> /models without meta.n_ctx
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+        },
+      ],
+    });
+
     const { DEFAULT_CTX } = await import("../src/constants");
 
     const model = new RouterModel(
@@ -133,38 +180,104 @@ describe("RouterModel context size extraction", () => {
 });
 
 describe("RouterModel capabilities detection", () => {
-  it("should detect image capability when --mmproj is present", () => {
-    const model = new RouterModel(
-      createModel({
-        status: {
-          value: "loaded",
-          args: ["--model", "gguf", "--mmproj", "mmproj.gguf"],
-          preset: "default",
+  it("should detect image capability when modalities.vision is true", async () => {
+    // getStatus() calls /models first
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "loaded", args: [], preset: "default", failed: false },
         },
-      }),
-    );
+      ],
+    });
+    // super.getCapabilities() calls /props?model=<id>
+    mockRpc.mockResolvedValueOnce({ modalities: { vision: true } });
 
-    expect(model.capabilities).toEqual(["image"]);
+    const model = new RouterModel(createModel());
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["image"]);
+    expect(mockRpc).toHaveBeenCalledWith("/props?model=test-model");
   });
 
-  it("should detect text-only capability when --mmproj is absent", () => {
-    const model = new RouterModel(
-      createModel({
-        status: {
-          value: "loaded",
-          args: ["--model", "gguf"],
-          preset: "default",
+  it("should detect text-only capability when modalities.vision is false", async () => {
+    // getStatus() calls /models first
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "loaded", args: [], preset: "default", failed: false },
         },
-      }),
-    );
+      ],
+    });
+    // super.getCapabilities() calls /props?model=<id>
+    mockRpc.mockResolvedValueOnce({ modalities: { vision: false } });
 
-    expect(model.capabilities).toEqual(["text"]);
+    const model = new RouterModel(createModel());
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["text"]);
   });
 
-  it("should default to text when status is undefined", () => {
-    const model = new RouterModel(createModel({ status: undefined }));
+  it("should default to text when /props call fails", async () => {
+    // getStatus() calls /models first
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "loaded", args: [], preset: "default", failed: false },
+        },
+      ],
+    });
+    // super.getCapabilities() calls /props?model=<id> which fails
+    mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
 
-    expect(model.capabilities).toEqual(["text"]);
+    const model = new RouterModel(createModel());
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["text"]);
+  });
+
+  it("should use status.args to detect image capability when not loaded", async () => {
+    // getStatus() calls /models first, returns unloaded
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "unloaded", args: ["--model", "gguf", "--mmproj", "mmproj.gguf"], preset: "default", failed: false },
+        },
+      ],
+    });
+
+    const model = new RouterModel(
+      createModel({
+        status: { value: "unloaded", args: ["--model", "gguf", "--mmproj", "mmproj.gguf"], preset: "default", failed: false },
+      }),
+    );
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["image"]);
+  });
+
+  it("should return text when not loaded and no --mmproj in args", async () => {
+    // getStatus() calls /models first, returns unloaded
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "test-model",
+          status: { value: "unloaded", args: ["--model", "gguf"], preset: "default", failed: false },
+        },
+      ],
+    });
+
+    const model = new RouterModel(
+      createModel({
+        status: { value: "unloaded", args: ["--model", "gguf"], preset: "default", failed: false },
+      }),
+    );
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["text"]);
   });
 });
 

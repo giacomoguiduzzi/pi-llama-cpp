@@ -57,14 +57,32 @@ describe("SingleModel mode", () => {
 });
 
 describe("SingleModel capabilities", () => {
-  it("should detect image capability when multimodal", () => {
-    const model = createModel({ capabilities: ["multimodal"] });
-    expect(model.capabilities).toEqual(["image"]);
+  it("should detect image capability when modalities.vision is true", async () => {
+    mockRpc.mockResolvedValueOnce({ modalities: { vision: true } });
+
+    const model = createModel();
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["image"]);
+    expect(mockRpc).toHaveBeenCalledWith("/props?model=test");
   });
 
-  it("should detect text-only capability when not multimodal", () => {
-    const model = createModel({ capabilities: [] });
-    expect(model.capabilities).toEqual(["text"]);
+  it("should detect text-only capability when modalities.vision is false", async () => {
+    mockRpc.mockResolvedValueOnce({ modalities: { vision: false } });
+
+    const model = createModel();
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["text"]);
+  });
+
+  it("should return text when /props call fails", async () => {
+    mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
+
+    const model = createModel();
+    const capabilities = await model.getCapabilities();
+
+    expect(capabilities).toEqual(["text"]);
   });
 });
 
@@ -90,29 +108,28 @@ describe("SingleModel getStatus", () => {
 });
 
 describe("SingleModel getContextSize", () => {
-  it("should return n_ctx from /slots endpoint", async () => {
-    mockRpc.mockResolvedValueOnce([{ n_ctx: 8192 }]);
+  it("should return n_ctx from /models endpoint meta", async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: [{ id: "test", meta: { n_ctx: 8192 } }],
+    });
 
     const model = createModel();
     const ctxSize = await model.getContextSize();
 
     expect(ctxSize).toBe(8192);
-    expect(mockRpc).toHaveBeenCalledWith("/slots");
+    expect(mockRpc).toHaveBeenCalledWith("/models");
   });
 
-  it("should cache the context size on first call", async () => {
-    mockRpc.mockResolvedValueOnce([{ n_ctx: 4096 }]);
+  it("should return DEFAULT_CTX when model not found in /models", async () => {
+    mockRpc.mockResolvedValueOnce({ data: [] });
 
     const model = createModel();
-    const first = await model.getContextSize();
-    const second = await model.getContextSize();
+    const ctxSize = await model.getContextSize();
 
-    expect(first).toBe(4096);
-    expect(second).toBe(4096);
-    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(ctxSize).toBe(DEFAULT_CTX);
   });
 
-  it("should return DEFAULT_CTX when /slots fails", async () => {
+  it("should return DEFAULT_CTX when /models fails", async () => {
     mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
 
     const model = createModel();
