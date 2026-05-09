@@ -25,9 +25,9 @@ const fileExists = async (filePath: string): Promise<boolean> => {
 };
 
 /**
- * Reads the contents of a file as JSON
- * @param filePath The path
- * @returns The content as JSON
+ * Reads and parses the contents of a file as JSON
+ * @param filePath The path to the file
+ * @returns The parsed content, or null if parsing fails
  */
 const readContents = async <T>(filePath: string): Promise<T | null> => {
   const raw = await readFile(filePath, "utf-8");
@@ -41,10 +41,10 @@ const readContents = async <T>(filePath: string): Promise<T | null> => {
 };
 
 /**
- * Reads a string value from a JSON config file
+ * Reads a value from a JSON config file by key
  * @param filePath Path to the JSON config file
  * @param key Key to extract from the parsed JSON
- * @returns The string value, or null if file/key missing or invalid
+ * @returns The value at the given key, or null if file/key missing or invalid
  */
 const readConfigValue = async <T>(
   filePath: string,

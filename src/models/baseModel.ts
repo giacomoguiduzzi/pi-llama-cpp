@@ -11,6 +11,11 @@ import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
 import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 
+/**
+ * Abstract base class for llama-server models.
+ * Provides common functionality for model identification, status checking,
+ * loading/unloading, and configuration conversion.
+ */
 export abstract class BaseModel {
   constructor(protected readonly model: DataProperty) {}
 

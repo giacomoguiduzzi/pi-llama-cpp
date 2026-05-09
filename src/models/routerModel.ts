@@ -5,6 +5,11 @@ import { ModelsEndpoint } from "../interfaces/endpoints/models";
 import { rpc } from "../tools/retriever";
 import { BaseModel } from "./baseModel";
 
+/**
+ * Represents a model in llama-server router mode.
+ * Tracks per-model status from the /models endpoint and extracts
+ * context size from startup arguments when the model is not loaded.
+ */
 export class RouterModel extends BaseModel {
   get mode(): Mode {
     return Mode.ROUTER;

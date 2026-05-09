@@ -19,10 +19,11 @@ export const isServerReady = async (): Promise<boolean> => {
 };
 
 /**
- * Extracts the data of a fetch command
- * @param endpoint The endpoint to fetch from
- * @param body The body (optional)
- * @returns Data from the fetch command
+ * Makes an HTTP request to the llama-server and returns the parsed JSON response
+ *
+ * @param endpoint The endpoint path to fetch (e.g. "/health")
+ * @param body The optional request body for POST requests
+ * @returns The parsed JSON response from the server
  */
 export const rpc = async <T>(
   endpoint: string,
@@ -62,8 +63,7 @@ export const listModels = async (): Promise<BaseModel[]> => {
   const { models, data } = await rpc<ModelsEndpoint>("/models");
 
   if (models) {
-    const [extra] = models;
-    return data.map((m) => new SingleModel(m, extra));
+    return data.map((m) => new SingleModel(m));
   }
 
   const response = data

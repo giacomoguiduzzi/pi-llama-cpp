@@ -31,7 +31,7 @@ const selectModel = async (
  * Get available actions for a model based on its mode and status.
  *
  * @param model The selected model
- * @returns
+ * @returns The array of available actions for the given model status
  */
 const getActionsForModel = async (model: BaseModel): Promise<Array<Action>> => {
   const routerModeActions: Record<Status, Array<Action>> = {
