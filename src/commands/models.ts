@@ -2,11 +2,12 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
-import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
-import { Action } from "./enums/action";
-import { Mode } from "./enums/mode";
-import { Status } from "./enums/status";
-import { BaseModel } from "./models/baseModel";
+import { PROVIDER_ID, PROVIDER_NAME } from "../constants";
+import { Action } from "../enums/action";
+import { Mode } from "../enums/mode";
+import { Status } from "../enums/status";
+import { BaseModel } from "../models/baseModel";
+import { resolveUrl } from "../tools/resolver";
 
 /**
  * Select a model from the list. Returns null if user cancels.
@@ -110,12 +111,24 @@ const modelSelectionHandler = async (
 };
 
 /**
+ * Handles the /models command when the server is unreachable.
+ *
+ * @param ctx The context used by Pi
+ */
+export const notFoundCommand = async (
+  ctx: ExtensionCommandContext,
+): Promise<void> => {
+  const url = await resolveUrl(ctx.cwd);
+  ctx.ui.notify(`${PROVIDER_NAME} unreachable at ${url}`, "error");
+};
+
+/**
  * Handles the /models command
  *
  * @param ctx The context used by Pi
  * @param pi The Pi extension
  */
-export const modelsCommandHandler = async (
+export const modelsCommand = async (
   ctx: ExtensionCommandContext,
   pi: ExtensionAPI,
   models: BaseModel[],

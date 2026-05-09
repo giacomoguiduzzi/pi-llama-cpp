@@ -2,46 +2,33 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
-import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
+import { modelsCommand, notFoundCommand } from "./commands/models";
+import { PROVIDER_NAME } from "./constants";
 import { onModelSelect } from "./events";
-import { modelsCommandHandler } from "./handlers";
-import { resolveApiKey, resolveUrl } from "./tools/resolver";
-import { isServerReady, listModels } from "./tools/retriever";
+import { registerLlamaCppProvider } from "./tools/provider";
+import { isServerReady } from "./tools/retriever";
 
 export default async function (pi: ExtensionAPI) {
-  // Command registration
+  // Server verification
   if (!(await isServerReady())) {
     pi.registerCommand("models", {
       description: `${PROVIDER_NAME} models (offline)`,
-      handler: async (
-        _: string,
-        ctx: ExtensionCommandContext,
-      ): Promise<void> => {
-        const url = await resolveUrl(ctx.cwd);
-        ctx.ui.notify(`${PROVIDER_NAME} unreachable at ${url}`, "error");
+      handler: async (_: string, ctx: ExtensionCommandContext) => {
+        await notFoundCommand(ctx);
       },
     });
 
     return;
   }
 
-  const cwd = process.cwd();
-  const url = await resolveUrl(cwd);
-  const serverModels = await listModels();
+  // Provider registration
+  const serverModels = await registerLlamaCppProvider(pi);
 
+  // Command: /models
   pi.registerCommand("models", {
     description: `Browse ${PROVIDER_NAME} models (live status)`,
     handler: async (_: string, ctx: ExtensionCommandContext) =>
-      await modelsCommandHandler(ctx, pi, serverModels),
-  });
-
-  // Provider registration
-  pi.registerProvider(PROVIDER_ID, {
-    name: PROVIDER_NAME,
-    baseUrl: `${url}/v1`,
-    api: "openai-completions",
-    apiKey: await resolveApiKey(),
-    models: await Promise.all(serverModels.map((m) => m.toProviderConfig())),
+      await modelsCommand(ctx, pi, serverModels),
   });
 
   // Events registration
