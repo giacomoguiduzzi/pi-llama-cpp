@@ -1,4 +1,4 @@
-import type { ProviderModelConfig } from "@mariozechner/pi-coding-agent";
+import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";

@@ -145,6 +145,6 @@ Each model exposed to Pi includes the following defaults:
 
 ## Dependencies
 
-| Dependency                      | Purpose                               |
-| ------------------------------- | ------------------------------------- |
-| `@mariozechner/pi-coding-agent` | Pi Coding Agent SDK (peer dependency) |
+| Dependency                        | Purpose                               |
+| --------------------------------- | ------------------------------------- |
+| `@earendil-works/pi-coding-agent` | Pi Coding Agent SDK (peer dependency) |

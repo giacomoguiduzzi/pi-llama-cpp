@@ -1,7 +1,7 @@
 import type {
   ExtensionAPI,
   ExtensionCommandContext,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { PROVIDER_ID, PROVIDER_NAME } from "./constants";
 import { onModelSelect } from "./events";
 import { modelsCommandHandler } from "./handlers";

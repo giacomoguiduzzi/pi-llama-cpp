@@ -1,4 +1,4 @@
-import { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { PROVIDER_ID } from "./constants";
 import { ModelSelectEvent } from "./interfaces/events";
 import { listModels } from "./tools/retriever";
