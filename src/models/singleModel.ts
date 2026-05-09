@@ -1,7 +1,6 @@
 import { DEFAULT_CTX } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
-import { DataProperty, ModelProperty } from "../interfaces/endpoints/models";
 import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { SlotsEndpoint } from "../interfaces/endpoints/slots";
 import { rpc } from "../tools/retriever";
@@ -10,20 +9,8 @@ import { BaseModel } from "./baseModel";
 export class SingleModel extends BaseModel {
   private contextSize?: number;
 
-  constructor(
-    protected readonly model: DataProperty,
-    private readonly extra: ModelProperty,
-  ) {
-    super(model);
-  }
-
   get mode(): Mode {
     return Mode.SINGLE;
-  }
-
-  get capabilities(): ["text"] | ["image"] {
-    const hasImage = this.extra.capabilities.includes("multimodal");
-    return hasImage ? ["image"] : ["text"];
   }
 
   async getStatus(): Promise<Status> {

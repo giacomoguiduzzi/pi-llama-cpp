@@ -1,22 +1,13 @@
 import { DEFAULT_CTX } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
-import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
+import { ModelsEndpoint } from "../interfaces/endpoints/models";
 import { rpc } from "../tools/retriever";
 import { BaseModel } from "./baseModel";
 
 export class RouterModel extends BaseModel {
-  constructor(protected readonly model: DataProperty) {
-    super(model);
-  }
-
   get mode(): Mode {
     return Mode.ROUTER;
-  }
-
-  get capabilities(): ["text"] | ["image"] {
-    const hasImage = this.model.status?.args?.includes("--mmproj") ?? false;
-    return hasImage ? ["image"] : ["text"];
   }
 
   async getStatus(): Promise<Status> {
@@ -32,6 +23,16 @@ export class RouterModel extends BaseModel {
     }
 
     return status;
+  }
+
+  async getCapabilities(): Promise<["text"] | ["image"]> {
+    // We can get the real capabilities if the model is already loaded
+    if ((await this.getStatus()) === Status.LOADED) {
+      return super.getCapabilities();
+    }
+
+    const hasImage = this.model.status?.args?.includes("--mmproj") ?? false;
+    return hasImage ? ["image"] : ["text"];
   }
 
   async getContextSize(): Promise<number> {

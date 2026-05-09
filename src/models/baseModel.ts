@@ -3,6 +3,7 @@ import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { DataProperty } from "../interfaces/endpoints/models";
+import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 
 export abstract class BaseModel {
@@ -40,9 +41,21 @@ export abstract class BaseModel {
   }
 
   /**
-   * Detects if the model can load images
+   * Detects the capabilities of the model
+   *
+   * @returns An array of capabilities, as expected by Pi
    */
-  abstract get capabilities(): ["text"] | ["image"];
+  async getCapabilities(): Promise<["text"] | ["image"]> {
+    try {
+      const { modalities } = await rpc<PropsEndpoint>(
+        `/props?model=${this.id}`,
+      );
+
+      return modalities.vision ? ["image"] : ["text"];
+    } catch {
+      return ["text"];
+    }
+  }
 
   /**
    * Gets the load status of the model
@@ -72,7 +85,7 @@ export abstract class BaseModel {
       `ID           : ${this.id}`,
       `Model        : ${this.name}`,
       `Reasoning    : ${this.reasoning}`,
-      `Capabilities : ${this.capabilities.join(", ")}`,
+      `Capabilities : ${(await this.getCapabilities()).join(", ")}`,
       `Context size : ${await this.getContextSize()}`,
       `Status       : ${await this.getStatus()}`,
     ];
@@ -90,7 +103,7 @@ export abstract class BaseModel {
       id: this.id,
       name: this.name,
       reasoning: this.reasoning,
-      input: this.capabilities,
+      input: await this.getCapabilities(),
       contextWindow: await this.getContextSize(),
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       maxTokens: MAX_TOKENS,
