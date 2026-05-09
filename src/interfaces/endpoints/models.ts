@@ -53,6 +53,7 @@ interface StatusProperty {
 interface MetaProperty {
   vocab_type: number;
   n_vocab: number;
+  n_ctx: number;
   n_ctx_train: number;
   n_embd: number;
   n_params: number;

@@ -1,8 +1,13 @@
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
+import {
+  DEFAULT_CTX,
+  MAX_TOKENS,
+  POLLING_INTERVAL,
+  POLLING_TIMEOUT,
+} from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
-import { DataProperty } from "../interfaces/endpoints/models";
+import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
 import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 
@@ -65,7 +70,17 @@ export abstract class BaseModel {
   /**
    * Gets the context size of a particular model
    */
-  abstract getContextSize(): Promise<number>;
+  async getContextSize(): Promise<number> {
+    try {
+      const { data } = await rpc<ModelsEndpoint>(`/models`);
+      const model = data.find((d) => d.id === this.id);
+
+      const response = model?.meta?.n_ctx;
+      return response ?? DEFAULT_CTX;
+    } catch {
+      return DEFAULT_CTX;
+    }
+  }
 
   /**
    * Sets up a label for the model selection screen

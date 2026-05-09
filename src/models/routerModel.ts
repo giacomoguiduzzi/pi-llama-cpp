@@ -36,13 +36,17 @@ export class RouterModel extends BaseModel {
   }
 
   async getContextSize(): Promise<number> {
-    let response = this.extractFrom("--ctx-size");
-    if (response) return response;
+    // We can get a more accurate context size if the model is already loaded
+    if ((await this.getStatus()) === Status.LOADED) {
+      return super.getContextSize();
+    }
 
-    response = this.extractFrom("--fit-ctx");
-    if (response) return response;
+    const response =
+      this.extractFrom("--ctx-size") ??
+      this.extractFrom("--fit-ctx") ??
+      DEFAULT_CTX;
 
-    return DEFAULT_CTX;
+    return response;
   }
 
   /**
