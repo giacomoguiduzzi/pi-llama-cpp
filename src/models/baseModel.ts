@@ -122,16 +122,13 @@ export abstract class BaseModel {
    * @param startTime The initial polling timestamp
    */
   async pollStatus(startTime = Date.now()): Promise<void> {
-    const status = await this.getStatus();
-    if (status !== Status.LOADING) return;
-
-    // Force a timeout if we wasted too much time polling
-    if (Date.now() - startTime > POLLING_TIMEOUT) {
-      const message = `Model loading timed out after ${POLLING_TIMEOUT} ms: ${this.id}`;
-      throw new Error(message);
+    while ((await this.getStatus()) === Status.LOADING) {
+      // Force a timeout if we wasted too much time polling
+      if (Date.now() - startTime > POLLING_TIMEOUT) {
+        const message = `Model loading timed out after ${POLLING_TIMEOUT} ms: ${this.id}`;
+        throw new Error(message);
+      }
+      await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
     }
-
-    await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
-    await this.pollStatus(startTime);
   }
 }
