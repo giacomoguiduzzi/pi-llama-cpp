@@ -47,11 +47,8 @@ export const rpc = async <T>(
     },
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status}: ${text}`);
-  }
-  return res.json() as T;
+  const response: T = await res.json();
+  return response;
 };
 
 /**
