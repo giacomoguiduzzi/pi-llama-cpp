@@ -115,7 +115,18 @@ describe("RouterModel context size extraction", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "loaded", args: ["--model", "gguf", "--ctx-size", "4096", "--fit-ctx", "8192"], preset: "default" },
+          status: {
+            value: "loaded",
+            args: [
+              "--model",
+              "gguf",
+              "--ctx-size",
+              "4096",
+              "--fit-ctx",
+              "8192",
+            ],
+            preset: "default",
+          },
         },
       ],
     });
@@ -149,7 +160,11 @@ describe("RouterModel context size extraction", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "loaded", args: ["--model", "gguf"], preset: "default" },
+          status: {
+            value: "loaded",
+            args: ["--model", "gguf"],
+            preset: "default",
+          },
         },
       ],
     });
@@ -186,7 +201,12 @@ describe("RouterModel capabilities detection", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "loaded", args: [], preset: "default", failed: false },
+          status: {
+            value: "loaded",
+            args: [],
+            preset: "default",
+            failed: false,
+          },
         },
       ],
     });
@@ -206,7 +226,12 @@ describe("RouterModel capabilities detection", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "loaded", args: [], preset: "default", failed: false },
+          status: {
+            value: "loaded",
+            args: [],
+            preset: "default",
+            failed: false,
+          },
         },
       ],
     });
@@ -225,7 +250,12 @@ describe("RouterModel capabilities detection", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "loaded", args: [], preset: "default", failed: false },
+          status: {
+            value: "loaded",
+            args: [],
+            preset: "default",
+            failed: false,
+          },
         },
       ],
     });
@@ -244,14 +274,24 @@ describe("RouterModel capabilities detection", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "unloaded", args: ["--model", "gguf", "--mmproj", "mmproj.gguf"], preset: "default", failed: false },
+          status: {
+            value: "unloaded",
+            args: ["--model", "gguf", "--mmproj", "mmproj.gguf"],
+            preset: "default",
+            failed: false,
+          },
         },
       ],
     });
 
     const model = new RouterModel(
       createModel({
-        status: { value: "unloaded", args: ["--model", "gguf", "--mmproj", "mmproj.gguf"], preset: "default", failed: false },
+        status: {
+          value: "unloaded",
+          args: ["--model", "gguf", "--mmproj", "mmproj.gguf"],
+          preset: "default",
+          failed: false,
+        },
       }),
     );
     const capabilities = await model.getCapabilities();
@@ -265,14 +305,24 @@ describe("RouterModel capabilities detection", () => {
       data: [
         {
           id: "test-model",
-          status: { value: "unloaded", args: ["--model", "gguf"], preset: "default", failed: false },
+          status: {
+            value: "unloaded",
+            args: ["--model", "gguf"],
+            preset: "default",
+            failed: false,
+          },
         },
       ],
     });
 
     const model = new RouterModel(
       createModel({
-        status: { value: "unloaded", args: ["--model", "gguf"], preset: "default", failed: false },
+        status: {
+          value: "unloaded",
+          args: ["--model", "gguf"],
+          preset: "default",
+          failed: false,
+        },
       }),
     );
     const capabilities = await model.getCapabilities();

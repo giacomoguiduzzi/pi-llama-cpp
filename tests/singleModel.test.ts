@@ -18,36 +18,13 @@ beforeEach(() => {
 });
 
 const createModel = (extra: Partial<ModelProperty> = {}): SingleModel =>
-  new SingleModel(
-    {
-      id: "test",
-      tags: [],
-      object: "model",
-      owned_by: "test",
-      created: Date.now(),
-    },
-    {
-      name: "test",
-      model: "test.gguf",
-      modified_at: new Date().toISOString(),
-      size: "1B",
-      digest: "abc123",
-      type: "model",
-      description: "test",
-      tags: [],
-      capabilities: [],
-      parameters: "",
-      details: {
-        parent_model: "",
-        format: "",
-        family: "",
-        families: [],
-        parameter_size: "",
-        quantization_level: "",
-      },
-      ...extra,
-    },
-  );
+  new SingleModel({
+    id: "test",
+    tags: [],
+    object: "model",
+    owned_by: "test",
+    created: Date.now(),
+  });
 
 describe("SingleModel mode", () => {
   it("should always return SINGLE mode", () => {
@@ -94,7 +71,7 @@ describe("SingleModel getStatus", () => {
     const status = await model.getStatus();
 
     expect(status).toBe(Status.LOADED);
-    expect(mockRpc).toHaveBeenCalledWith("/props");
+    expect(mockRpc).toHaveBeenCalledWith(`/props?model=${model.id}`);
   });
 
   it("should return SLEEPING when is_sleeping is true", async () => {
