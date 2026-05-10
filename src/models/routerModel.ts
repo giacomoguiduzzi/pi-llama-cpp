@@ -24,7 +24,18 @@ export class RouterModel extends BaseModel {
     const status = this.statusMapper[model.status!.value];
     if (status === Status.UNLOADED) {
       if (this.model.status!.failed) {
-        return await this.getStatusWorkaround();
+        /**
+         * Workaround for the currently-bugged /models status detection
+         * (I suspect it was introduced in PR #22683 of llama.cpp)
+         *
+         * This workaround will show an eternal "loading" status when the model's real status
+         * is "failed", which is acceptable, because models in "failed" or "loading" status
+         * shouldn't be used.
+         *
+         * In exchange, it will allow unloaded models to be correctly shown as "unloaded".
+         */
+        // return Status.FAILED;  // <-- Original implementation
+        return await super.getStatus();
       }
 
       return Status.UNLOADED;

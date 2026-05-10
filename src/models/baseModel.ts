@@ -70,7 +70,21 @@ export abstract class BaseModel {
   /**
    * Gets the load status of the model
    */
-  abstract getStatus(): Promise<Status>;
+  public async getStatus(): Promise<Status> {
+    try {
+      const { is_sleeping, error } = await rpc<PropsEndpoint>(
+        `/props?model=${this.id}`,
+      );
+
+      if (is_sleeping) return Status.SLEEPING;
+      if (!error) return Status.LOADED;
+      if (error.code === 503) return Status.LOADING;
+
+      return Status.UNLOADED;
+    } catch (err) {
+      return Status.FAILED;
+    }
+  }
 
   /**
    * Gets the context size of a particular model
