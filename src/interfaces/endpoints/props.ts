@@ -1,11 +1,8 @@
-
 /**
  * The structure of llama-server's /props endpoint
- *
- * In single mode, applies to /props
- * In router mode, applies to /props?model=<id>
  */
 export interface PropsEndpoint {
+  error?: PropsError;
   default_generation_settings: Record<string, any>;
   total_slots: number;
   model_alias: string;
@@ -26,4 +23,10 @@ export interface PropsEndpoint {
   eos_token: string;
   build_info: string;
   is_sleeping: boolean;
+}
+
+export interface PropsError {
+  code: number;
+  message: string;
+  type: string;
 }
