@@ -2,6 +2,7 @@ import { DEFAULT_CTX } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { ModelsEndpoint } from "../interfaces/endpoints/models";
+import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 import { BaseModel } from "./baseModel";
 
@@ -22,12 +23,36 @@ export class RouterModel extends BaseModel {
 
     const status = this.statusMapper[model.status!.value];
     if (status === Status.UNLOADED) {
-      if (this.model.status!.failed) return Status.FAILED;
+      if (this.model.status!.failed) {
+        return await this.getStatusWorkaround();
+      }
 
       return Status.UNLOADED;
     }
 
     return status;
+  }
+
+  /**
+   * Workaround for the currently-bugged /models status detection
+   * (I suspect it was introduced in PR #22683 of llama.cpp)
+   *
+   * @returns The detected status
+   */
+  private async getStatusWorkaround(): Promise<Status> {
+    try {
+      const { is_sleeping, error } = await rpc<PropsEndpoint>(
+        `/props?model=${this.id}`,
+      );
+
+      if (is_sleeping) return Status.SLEEPING;
+      if (!error) return Status.LOADED;
+      if (error.code === 503) return Status.LOADING;
+
+      return Status.UNLOADED;
+    } catch (err) {
+      return Status.FAILED;
+    }
   }
 
   async getCapabilities(): Promise<["text"] | ["image"]> {
