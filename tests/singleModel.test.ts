@@ -85,28 +85,19 @@ describe("SingleModel getStatus", () => {
 });
 
 describe("SingleModel getContextSize", () => {
-  it("should return n_ctx from /models endpoint meta", async () => {
+  it("should return n_ctx from /props endpoint default_generation_settings", async () => {
     mockRpc.mockResolvedValueOnce({
-      data: [{ id: "test", meta: { n_ctx: 8192 } }],
+      default_generation_settings: { n_ctx: 8192 },
     });
 
     const model = createModel();
     const ctxSize = await model.getContextSize();
 
     expect(ctxSize).toBe(8192);
-    expect(mockRpc).toHaveBeenCalledWith("/models");
+    expect(mockRpc).toHaveBeenCalledWith("/props?model=test");
   });
 
-  it("should return DEFAULT_CTX when model not found in /models", async () => {
-    mockRpc.mockResolvedValueOnce({ data: [] });
-
-    const model = createModel();
-    const ctxSize = await model.getContextSize();
-
-    expect(ctxSize).toBe(DEFAULT_CTX);
-  });
-
-  it("should return DEFAULT_CTX when /models fails", async () => {
+  it("should return DEFAULT_CTX when /props fails", async () => {
     mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
 
     const model = createModel();

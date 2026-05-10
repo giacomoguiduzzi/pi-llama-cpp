@@ -130,14 +130,9 @@ describe("RouterModel context size extraction", () => {
         },
       ],
     });
-    // Second call: super.getContextSize() -> /models with meta.n_ctx
+    // Second call: super.getContextSize() -> /props?model=test-model with default_generation_settings.n_ctx
     mockRpc.mockResolvedValueOnce({
-      data: [
-        {
-          id: "test-model",
-          meta: { n_ctx: 4096 },
-        },
-      ],
+      default_generation_settings: { n_ctx: 4096 },
     });
 
     const model = new RouterModel(
