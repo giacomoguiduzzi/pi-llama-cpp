@@ -7,7 +7,7 @@ import {
 } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
-import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
+import { DataProperty } from "../interfaces/endpoints/models";
 import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 
@@ -97,11 +97,11 @@ export abstract class BaseModel {
    */
   async getContextSize(): Promise<number> {
     try {
-      const { data } = await rpc<ModelsEndpoint>(`/models`);
-      const model = data.find((d) => d.id === this.id);
-
-      const response = model?.meta?.n_ctx;
-      return response ?? DEFAULT_CTX;
+      const { default_generation_settings } = await rpc<PropsEndpoint>(
+        `/props?model=${this.id}`,
+      );
+      const { n_ctx } = default_generation_settings;
+      return n_ctx;
     } catch {
       return DEFAULT_CTX;
     }
