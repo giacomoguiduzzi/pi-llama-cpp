@@ -81,8 +81,10 @@ export abstract class BaseModel {
       if (is_sleeping) return Status.SLEEPING;
       if (!error) return Status.LOADED;
       if (error.code === 503) return Status.LOADING;
+      if (error.code === 400 && error.message === "model is not loaded")
+        return Status.UNLOADED;
 
-      return Status.UNLOADED;
+      return Status.FAILED;
     } catch (err) {
       return Status.FAILED;
     }
