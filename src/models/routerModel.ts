@@ -1,4 +1,4 @@
-import { DEFAULT_CTX } from "../constants";
+import { DEFAULT_CTX, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { ModelsEndpoint } from "../interfaces/endpoints/models";
@@ -22,23 +22,8 @@ export class RouterModel extends BaseModel {
     if (!model) return Status.FAILED;
 
     const status = this.statusMapper[model.status!.value];
-    if (status === Status.UNLOADED) {
-      if (this.model.status!.failed) {
-        /**
-         * Workaround for the currently-bugged /models status detection
-         * (I suspect it was introduced in PR #22683 of llama.cpp)
-         *
-         * This workaround will show an eternal "loading" status when the model's real status
-         * is "failed", which is acceptable, because models in "failed" or "loading" status
-         * shouldn't be used.
-         *
-         * In exchange, it will allow unloaded models to be correctly shown as "unloaded".
-         */
-        // return Status.FAILED;  // <-- Original implementation
-        return await super.getStatus();
-      }
-
-      return Status.UNLOADED;
+    if (status === Status.UNLOADED || status === Status.LOADING) {
+      return super.getStatus();
     }
 
     return status;
@@ -48,22 +33,33 @@ export class RouterModel extends BaseModel {
    * Workaround for the currently-bugged /models status detection
    * (I suspect it was introduced in PR #22683 of llama.cpp)
    *
-   * @returns The detected status
+   * When a model is loaded for the very first time,
+   * this workaround will try to poll to /props instead of /models
+   * for up to 5 seconds to try to detect if the model is really loading,
+   * or if it definitely failed.
+   *
+   * The tradeoff is that we'll have to wait for 5 seconds
+   * while the model is "loading", while not really loading.
+   *
+   * In exchange, it will allow unloaded models to be correctly shown as "unloaded".
    */
-  private async getStatusWorkaround(): Promise<Status> {
-    try {
-      const { is_sleeping, error } = await rpc<PropsEndpoint>(
-        `/props?model=${this.id}`,
-      );
+  async pollStatus(startTime = Date.now()): Promise<void> {
+    let elapsed = 0;
+    const limit = 5000;
 
-      if (is_sleeping) return Status.SLEEPING;
-      if (!error) return Status.LOADED;
-      if (error.code === 503) return Status.LOADING;
-
-      return Status.UNLOADED;
-    } catch (err) {
-      return Status.FAILED;
+    // Grab the glitch
+    while (Date.now() - startTime <= limit) {
+      try {
+        await rpc<PropsEndpoint>(`/props?model=${this.id}`);
+        break;
+      } catch {
+        elapsed += POLLING_INTERVAL;
+        await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
+      }
     }
+
+    const timeout = POLLING_TIMEOUT - elapsed;
+    return await super.pollStatus(startTime, timeout);
   }
 
   async getCapabilities(): Promise<["text"] | ["image"]> {
