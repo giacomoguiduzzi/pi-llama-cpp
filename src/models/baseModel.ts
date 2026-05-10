@@ -69,6 +69,8 @@ export abstract class BaseModel {
 
   /**
    * Gets the load status of the model
+   *
+   * @returns The current status
    */
   public async getStatus(): Promise<Status> {
     try {
@@ -88,6 +90,8 @@ export abstract class BaseModel {
 
   /**
    * Gets the context size of a particular model
+   *
+   * @returns The detected context size
    */
   async getContextSize(): Promise<number> {
     try {
@@ -130,6 +134,7 @@ export abstract class BaseModel {
 
   /**
    * Converts the llama-server model into a configuration object used by Pi
+   *
    * @returns A Pi configuration object
    */
   async toProviderConfig(): Promise<ProviderModelConfig> {
@@ -167,15 +172,21 @@ export abstract class BaseModel {
    * Polls llama-server to check when the model is loaded
    *
    * @param startTime The initial polling timestamp
+   * @param timeout The maximum amount of ms before timeout. Defaults to POLLING_TIMEOUT
+   * @param interval The polling interval. Defaults to POLLING_INTERVAL
    */
-  async pollStatus(startTime = Date.now()): Promise<void> {
+  async pollStatus(
+    startTime: number = Date.now(),
+    timeout: number = POLLING_TIMEOUT,
+    interval: number = POLLING_INTERVAL,
+  ): Promise<void> {
     while ((await this.getStatus()) === Status.LOADING) {
       // Force a timeout if we wasted too much time polling
-      if (Date.now() - startTime > POLLING_TIMEOUT) {
-        const message = `Model loading timed out after ${POLLING_TIMEOUT} ms: ${this.id}`;
+      if (Date.now() - startTime > timeout) {
+        const message = `Model loading timed out after ${timeout} ms: ${this.id}`;
         throw new Error(message);
       }
-      await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
+      await new Promise((r) => setTimeout(r, interval));
     }
   }
 }
