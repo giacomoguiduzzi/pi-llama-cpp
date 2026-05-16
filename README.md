@@ -99,7 +99,9 @@ llama-server --model path/to/model.gguf ...
 ```
 
 The extension determines the context size as follows:
-- **Router mode** — when loaded, reads `meta.n_ctx` from the `/models` endpoint; when not loaded, reads `--ctx-size` and/or `--fit-ctx` from the model's status `args` array
+- **Router mode**
+  - When loaded, reads `meta.n_ctx` from the `/models` endpoint
+  - When not loaded, reads `--ctx-size` and/or `--fit-ctx` from the server arguments, or `ctx-size` and/or `fit-ctx` keys from the **presets.ini** file.
 - **Single mode** — reads `meta.n_ctx` from the `/models` endpoint
 - Falls back to `128000` if not available
 
