@@ -60,7 +60,7 @@ export abstract class BaseModel {
   public async getStatus(): Promise<Status> {
     try {
       const { is_sleeping, error } = await rpc<PropsEndpoint>(
-        `/props?model=${this.id}`,
+        `/props?model=${this.id}&autoload=false`,
       );
 
       if (is_sleeping) return Status.SLEEPING;

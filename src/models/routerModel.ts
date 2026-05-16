@@ -50,7 +50,7 @@ export class RouterModel extends BaseModel {
     // Grab the glitch
     while (Date.now() - startTime <= limit) {
       try {
-        await rpc<PropsEndpoint>(`/props?model=${this.id}`);
+        await rpc<PropsEndpoint>(`/props?model=${this.id}&autoload=false`);
         break;
       } catch {
         elapsed += POLLING_INTERVAL;
