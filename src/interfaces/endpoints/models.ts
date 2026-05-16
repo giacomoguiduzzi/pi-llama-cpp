@@ -39,6 +39,7 @@ export interface DataProperty {
   owned_by: string;
   created: number;
   status?: StatusProperty;
+  architecture?: ArchitectureProperty;
   meta?: MetaProperty;
 }
 
@@ -48,6 +49,11 @@ interface StatusProperty {
   preset: string;
   exit_code?: number;
   failed?: boolean;
+}
+
+interface ArchitectureProperty {
+  input_modalities: ("text" | "image" | "audio")[];
+  output_modalities: ["text"];
 }
 
 interface MetaProperty {
