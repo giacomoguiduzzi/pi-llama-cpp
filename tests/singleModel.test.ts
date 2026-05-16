@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_CTX } from "../src/constants";
 import { Mode } from "../src/enums/mode";
 import { Status } from "../src/enums/status";
 import { ModelProperty } from "../src/interfaces/endpoints/models";
@@ -34,27 +33,22 @@ describe("SingleModel mode", () => {
 });
 
 describe("SingleModel capabilities", () => {
-  it("should detect image capability when modalities.vision is true", async () => {
-    mockRpc.mockResolvedValueOnce({ modalities: { vision: true } });
+  it("should detect image capability when multimodal is in capabilities", async () => {
+    mockRpc.mockResolvedValueOnce({
+      models: [{ id: "test", capabilities: ["multimodal"] }],
+    });
 
     const model = createModel();
     const capabilities = await model.getCapabilities();
 
-    expect(capabilities).toEqual(["image"]);
-    expect(mockRpc).toHaveBeenCalledWith("/props?model=test");
+    expect(capabilities).toEqual(["text", "image"]);
+    expect(mockRpc).toHaveBeenCalledWith("/models");
   });
 
-  it("should detect text-only capability when modalities.vision is false", async () => {
-    mockRpc.mockResolvedValueOnce({ modalities: { vision: false } });
-
-    const model = createModel();
-    const capabilities = await model.getCapabilities();
-
-    expect(capabilities).toEqual(["text"]);
-  });
-
-  it("should return text when /props call fails", async () => {
-    mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
+  it("should detect text-only capability when multimodal is not in capabilities", async () => {
+    mockRpc.mockResolvedValueOnce({
+      models: [{ id: "test", capabilities: [] }],
+    });
 
     const model = createModel();
     const capabilities = await model.getCapabilities();
@@ -85,24 +79,15 @@ describe("SingleModel getStatus", () => {
 });
 
 describe("SingleModel getContextSize", () => {
-  it("should return n_ctx from /props endpoint default_generation_settings", async () => {
+  it("should return n_ctx from /models endpoint meta", async () => {
     mockRpc.mockResolvedValueOnce({
-      default_generation_settings: { n_ctx: 8192 },
+      data: [{ id: "test", meta: { n_ctx: 8192 } }],
     });
 
     const model = createModel();
     const ctxSize = await model.getContextSize();
 
     expect(ctxSize).toBe(8192);
-    expect(mockRpc).toHaveBeenCalledWith("/props?model=test");
-  });
-
-  it("should return DEFAULT_CTX when /props fails", async () => {
-    mockRpc.mockRejectedValueOnce(new Error("Connection refused"));
-
-    const model = createModel();
-    const ctxSize = await model.getContextSize();
-
-    expect(ctxSize).toBe(DEFAULT_CTX);
+    expect(mockRpc).toHaveBeenCalledWith("/models");
   });
 });

@@ -62,7 +62,12 @@ const getActionsForModel = async (model: TestModel): Promise<Array<Action>> => {
     [Status.LOADED]: [Action.SWITCH, Action.UNLOAD, Action.INFO, Action.CANCEL],
     [Status.LOADING]: [Action.INFO, Action.CANCEL],
     [Status.FAILED]: [Action.RETRY, Action.CANCEL],
-    [Status.SLEEPING]: [Action.UNLOAD, Action.INFO, Action.CANCEL],
+    [Status.SLEEPING]: [
+      Action.SWITCH,
+      Action.UNLOAD,
+      Action.INFO,
+      Action.CANCEL,
+    ],
     [Status.UNLOADED]: [Action.LOAD, Action.CANCEL],
   };
 
@@ -106,7 +111,7 @@ describe("Action availability", () => {
     {
       mode: Mode.ROUTER,
       status: Status.SLEEPING,
-      expected: [Action.UNLOAD, Action.INFO, Action.CANCEL],
+      expected: [Action.SWITCH, Action.UNLOAD, Action.INFO, Action.CANCEL],
     },
     {
       mode: Mode.ROUTER,
