@@ -1,13 +1,8 @@
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import {
-  DEFAULT_CTX,
-  MAX_TOKENS,
-  POLLING_INTERVAL,
-  POLLING_TIMEOUT,
-} from "../constants";
+import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
-import { DataProperty } from "../interfaces/endpoints/models";
+import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
 import { PropsEndpoint } from "../interfaces/endpoints/props";
 import { rpc } from "../tools/retriever";
 
@@ -86,15 +81,10 @@ export abstract class BaseModel {
    * @returns The detected context size
    */
   async getContextSize(): Promise<number> {
-    try {
-      const { default_generation_settings } = await rpc<PropsEndpoint>(
-        `/props?model=${this.id}`,
-      );
-      const { n_ctx } = default_generation_settings;
-      return n_ctx;
-    } catch {
-      return DEFAULT_CTX;
-    }
+    const { data } = await rpc<ModelsEndpoint>("/models");
+    const { n_ctx } = data.find((m) => m.id === this.id)?.meta!;
+
+    return n_ctx;
   }
 
   /**
