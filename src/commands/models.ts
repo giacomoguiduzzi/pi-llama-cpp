@@ -173,7 +173,7 @@ export const modelsCommand = async (
       }
 
       if ((await model.getStatus()) === Status.FAILED) {
-        throw new Error("Failed to load model");
+        throw new Error(`Failed to load model  ${model.name}`);
       }
 
       await pi.setModel(piModel);

@@ -18,6 +18,9 @@ export const onModelSelect = async (
   const model = models.find((m) => m.id === event.model.id);
   if (!model) return;
 
-  ctx.ui.notify(`>> Loading ${model.id}...`, "info");
-  await model.load();
+  ctx.ui.notify(`Loading ${model.name}...`, "info");
+  await model
+    .load()
+    .then(() => ctx.ui.notify(`Model ${model.name} ready`, "info"))
+    .catch(() => ctx.ui.notify(`Failed to load model ${model.name}`, "error"));
 };
