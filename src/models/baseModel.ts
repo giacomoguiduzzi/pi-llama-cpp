@@ -137,7 +137,8 @@ export abstract class BaseModel {
    * Loads the model in llama-server
    */
   async load(): Promise<void> {
-    if ((await this.getStatus()) === Status.LOADED) return;
+    const status = await this.getStatus();
+    if (status === Status.LOADED || status === Status.SLEEPING) return;
 
     await rpc("/models/load", { model: this.id });
     await this.pollStatus();
