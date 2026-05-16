@@ -68,11 +68,20 @@ export class CommandManager {
    * @param pi The Pi extension
    * @returns A command handler
    */
-  async run(_args: string, ctx: ExtensionCommandContext) {
+  async run(args: string, ctx: ExtensionCommandContext) {
     if (!(await isServerReady())) {
       return await notFoundCommand(ctx);
     }
 
+    // Command: `/models info`
+    if (args === "info") {
+      const info = await Promise.all(this.serverModels.map((m) => m.getInfo()));
+      const message = ctx.ui.theme.fg("accent", info.join("\n"));
+      ctx.ui.notify(message, "info");
+      return;
+    }
+
+    // Command: `/models`
     return await modelsCommand(ctx, this.pi, this.serverModels);
   }
 }

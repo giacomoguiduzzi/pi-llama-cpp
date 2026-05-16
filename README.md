@@ -105,9 +105,10 @@ The extension determines the context size as follows:
 
 ### Commands
 
-| Command   | Description                                                                                |
-| --------- | ------------------------------------------------------------------------------------------ |
-| `/models` | Browse your models with live status. Select a model to load, switch, or unload it.         |
+| Command          | Description                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| `/models`        | Browse your models with live status. Select a model to load, switch, or unload it.         |
+| `/models info`   | Show detailed information for all available models at once.                                |
 
 > **Note:** When the llama.cpp server is unreachable, `/models` displays an error notification with the configured server URL.
 

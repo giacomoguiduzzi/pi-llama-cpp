@@ -130,8 +130,10 @@ export const notFoundCommand = async (
 /**
  * Handles the /models command
  *
+ * @param args Arguments passed to the command
  * @param ctx The context used by Pi
  * @param pi The Pi extension
+ * @param models List of available models
  */
 export const modelsCommand = async (
   ctx: ExtensionCommandContext,
