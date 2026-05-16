@@ -109,7 +109,7 @@ The extension determines the context size as follows:
 | --------- | ------------------------------------------------------------------------------------------ |
 | `/models` | Browse your models with live status. Select a model to load, switch, or unload it.         |
 
-> **Note:** When the llama.cpp server is unreachable, `/models` is still available but shows the description `Llama.cpp models (offline)` and displays an error notification with the configured server URL.
+> **Note:** When the llama.cpp server is unreachable, `/models` displays an error notification with the configured server URL.
 
 ### Model Actions
 
