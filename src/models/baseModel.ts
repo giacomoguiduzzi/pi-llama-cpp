@@ -55,17 +55,7 @@ export abstract class BaseModel {
    *
    * @returns An array of capabilities, as expected by Pi
    */
-  async getCapabilities(): Promise<["text"] | ["image"]> {
-    try {
-      const { modalities } = await rpc<PropsEndpoint>(
-        `/props?model=${this.id}`,
-      );
-
-      return modalities.vision ? ["image"] : ["text"];
-    } catch {
-      return ["text"];
-    }
-  }
+  abstract getCapabilities(): Promise<("text" | "image")[]>;
 
   /**
    * Gets the load status of the model

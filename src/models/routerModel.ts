@@ -62,14 +62,17 @@ export class RouterModel extends BaseModel {
     return await super.pollStatus(startTime, timeout);
   }
 
-  async getCapabilities(): Promise<["text"] | ["image"]> {
-    // We can get the real capabilities if the model is already loaded
-    if ((await this.getStatus()) === Status.LOADED) {
-      return super.getCapabilities();
-    }
+  async getCapabilities(): Promise<("text" | "image")[]> {
+    const { data } = await rpc<ModelsEndpoint>(`/models`);
+    const model = data.find((d) => d.id === this.id);
+    if (!model) return ["text"];
 
-    const hasImage = this.model.status?.args?.includes("--mmproj") ?? false;
-    return hasImage ? ["image"] : ["text"];
+    const { input_modalities } = model.architecture!;
+    const response = input_modalities.filter(
+      (mod) => mod === "text" || mod === "image",
+    );
+
+    return response;
   }
 
   async getContextSize(): Promise<number> {
