@@ -111,6 +111,7 @@ The extension determines the context size as follows:
 | ---------------- | ------------------------------------------------------------------------------------------ |
 | `/models`        | Browse your models with live status. Select a model to load, switch, or unload it.         |
 | `/models info`   | Show detailed information for all available models at once.                                |
+| `/models unload` | Unload all loaded models at once (Note: this only makes sense in router mode).             |
 
 > **Note:** When the llama.cpp server is unreachable, `/models` displays an error notification with the configured server URL.
 
@@ -142,9 +143,9 @@ When you trigger a load, switch, or retry action, the extension polls the server
 
 Each model exposed to Pi includes the following defaults:
 
-- **`maxTokens`** — `32000` (maximum possible tokens per response according to Pi's source code)
+- **`maxTokens`** — dynamically set to the model's context window (detected from llama-server)
 - **`reasoning`** — `true` (assumed, as llama.cpp's `/models` endpoint does not expose it)
-- **`cost`** — all zero (local model)
+- **`cost`** — all zero (local models)
 
 ## Dependencies
 
