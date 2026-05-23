@@ -1,13 +1,42 @@
 import type {
   ExtensionAPI,
   ExtensionCommandContext,
+  ExtensionContext,
+  SessionBeforeSwitchEvent,
 } from "@earendil-works/pi-coding-agent";
-import { PROVIDER_ID, PROVIDER_NAME } from "../constants";
+import { PROVIDER_ID, PROVIDER_NAME, READABLE_TIMEOUT } from "../constants";
 import { Action } from "../enums/action";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { BaseModel } from "../models/baseModel";
 import { resolveUrl } from "../tools/resolver";
+
+// In-flight model reference — handler gates on this.
+let inflightModel: BaseModel | null = null;
+
+export const resetInflightModel = () => (inflightModel = null);
+
+/**
+ * Session-switch handler. Registered once at extension init.
+ * Only notifies if a model load is actually in-flight.
+ */
+export const onSessionBeforeSwitch = async (
+  _event: SessionBeforeSwitchEvent,
+  ctx: ExtensionContext,
+) => {
+  if (!inflightModel) return;
+
+  const messages = [
+    `Session change detected while model '${inflightModel.name}' was still loading.`,
+    "Model load will continue in the background, but UI might not update.",
+    "",
+    "Verify that your new model is loaded, or use /models to re-select it afterwards.",
+  ];
+  ctx.ui.notify(messages.join("\n"), "warning");
+
+  // Show the notification for a reasonable amount of time
+  await new Promise((r) => setTimeout(r, READABLE_TIMEOUT));
+};
 
 /**
  * Select a model from the list. Returns null if user cancels.
@@ -167,6 +196,7 @@ export const modelsCommand = async (
   const loadActions = [Action.LOAD, Action.SWITCH, Action.RETRY];
   if (loadActions.includes(action)) {
     ctx.ui.notify(`Loading ${model.name}...`, "info");
+    inflightModel = model;
 
     const onSuccess = async () => {
       const piModel = ctx.modelRegistry.find(PROVIDER_ID, model.id);
@@ -175,7 +205,7 @@ export const modelsCommand = async (
       }
 
       if ((await model.getStatus()) === Status.FAILED) {
-        throw new Error(`Failed to load model  ${model.name}`);
+        throw new Error(`Failed to load model ${model.name}`);
       }
 
       await pi.setModel(piModel);
@@ -184,10 +214,15 @@ export const modelsCommand = async (
 
     const onFailure = (err: any) => {
       const message = err instanceof Error ? err.message : String(err);
-      ctx.ui.notify(message, "error");
+
+      try {
+        ctx.ui.notify(message, "error");
+      } catch {
+        // ctx went stale between error and notification
+      }
     };
 
     // Load the model without blocking the UI
-    model.load().then(onSuccess).catch(onFailure);
+    model.load().then(onSuccess).catch(onFailure).finally(resetInflightModel);
   }
 };

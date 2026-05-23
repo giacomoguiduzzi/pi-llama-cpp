@@ -2,6 +2,7 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
+import { onSessionBeforeSwitch } from "./commands/models";
 import { PROVIDER_NAME } from "./constants";
 import { onModelSelect } from "./events";
 import { CommandManager } from "./manager";
@@ -19,4 +20,5 @@ export default async function (pi: ExtensionAPI) {
 
   // Events registration
   pi.on("model_select", onModelSelect);
+  pi.on("session_before_switch", onSessionBeforeSwitch);
 }

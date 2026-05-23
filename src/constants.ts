@@ -37,3 +37,8 @@ export const POLLING_INTERVAL = 500;
  * Maximum time (ms) to wait for model loading before giving up
  */
 export const POLLING_TIMEOUT = 60000;
+
+/**
+ * Reasonable time to read notifications if context goes stale
+ */
+export const READABLE_TIMEOUT = 15000;
