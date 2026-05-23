@@ -24,11 +24,6 @@ export const API_KEY_PLACEHOLDER = "sk-placeholder";
 export const DEFAULT_CTX = 128000;
 
 /**
- * Maximum number of tokens a model can generate in a single response
- */
-export const MAX_TOKENS = 32000;
-
-/**
  * Polling interval (ms) for checking model load status
  */
 export const POLLING_INTERVAL = 500;

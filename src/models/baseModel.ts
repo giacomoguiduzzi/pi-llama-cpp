@@ -1,5 +1,5 @@
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import { MAX_TOKENS, POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
+import { POLLING_INTERVAL, POLLING_TIMEOUT } from "../constants";
 import { Mode } from "../enums/mode";
 import { Status } from "../enums/status";
 import { DataProperty, ModelsEndpoint } from "../interfaces/endpoints/models";
@@ -127,7 +127,7 @@ export abstract class BaseModel {
       input: await this.getCapabilities(),
       contextWindow: await this.getContextSize(),
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      maxTokens: MAX_TOKENS,
+      maxTokens: await this.getContextSize(),
     };
 
     return response;
