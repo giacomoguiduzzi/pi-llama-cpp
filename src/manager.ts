@@ -66,7 +66,6 @@ export class CommandManager {
    * @param args Arguments passed to the command
    * @param ctx The context used by Pi
    * @param pi The Pi extension
-   * @returns A command handler
    */
   async run(args: string, ctx: ExtensionCommandContext) {
     if (!(await isServerReady())) {
@@ -81,7 +80,14 @@ export class CommandManager {
       return;
     }
 
-    // Command: `/models`
+    // Command: `/models unload`
+    if (args === "unload") {
+      await Promise.all(this.serverModels.map((m) => m.unload()));
+      ctx.ui.notify(`Unloaded all ${PROVIDER_NAME} models`, "info");
+      return;
+    }
+
+    // Command: `/models` (interactive menu)
     return await modelsCommand(ctx, this.pi, this.serverModels);
   }
 }

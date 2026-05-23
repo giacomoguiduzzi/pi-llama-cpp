@@ -65,7 +65,9 @@ describe("SingleModel getStatus", () => {
     const status = await model.getStatus();
 
     expect(status).toBe(Status.LOADED);
-    expect(mockRpc).toHaveBeenCalledWith(`/props?model=${model.id}&autoload=false`);
+    expect(mockRpc).toHaveBeenCalledWith(
+      `/props?model=${model.id}&autoload=false`,
+    );
   });
 
   it("should return SLEEPING when is_sleeping is true", async () => {

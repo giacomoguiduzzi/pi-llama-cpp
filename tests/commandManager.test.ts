@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { CommandManager } from "../src/manager";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PROVIDER_ID, PROVIDER_NAME } from "../src/constants";
+import { CommandManager } from "../src/manager";
 
 // Mock modules at top level (vi.mock is hoisted)
 vi.mock("../src/tools/retriever", () => ({
@@ -14,8 +14,8 @@ vi.mock("../src/tools/resolver", () => ({
 }));
 
 // Import mocked functions after vi.mock
+import { resolveApiKey, resolveUrl } from "../src/tools/resolver";
 import { isServerReady, listModels } from "../src/tools/retriever";
-import { resolveUrl, resolveApiKey } from "../src/tools/resolver";
 
 const mockPi = {
   registerProvider: vi.fn(),
@@ -47,7 +47,9 @@ describe("CommandManager", () => {
     const mockModel = {
       name: "test-model",
       id: "test-model",
-      toProviderConfig: vi.fn().mockResolvedValue({ id: "test-model", maxTokens: 32000 }),
+      toProviderConfig: vi
+        .fn()
+        .mockResolvedValue({ id: "test-model", maxTokens: 32000 }),
     };
     (isServerReady as any).mockResolvedValue(true);
     (listModels as any).mockResolvedValue([mockModel]);
@@ -92,11 +94,39 @@ describe("CommandManager", () => {
       ui: { notify: notifyFn, theme: { fg: (_c: string, t: string) => t } },
     } as any);
 
+    expect(notifyFn).toHaveBeenCalledWith("Model info for test-model", "info");
+    expect(listModels).toHaveBeenCalledOnce();
+  });
+
+  it("should unload all models when args is 'unload'", async () => {
+    const mockModel1 = {
+      name: "model-1",
+      id: "model-1",
+      unload: vi.fn().mockResolvedValue(undefined),
+      toProviderConfig: vi.fn().mockResolvedValue({ id: "model-1" }),
+    };
+    const mockModel2 = {
+      name: "model-2",
+      id: "model-2",
+      unload: vi.fn().mockResolvedValue(undefined),
+      toProviderConfig: vi.fn().mockResolvedValue({ id: "model-2" }),
+    };
+    (isServerReady as any).mockResolvedValue(true);
+    (listModels as any).mockResolvedValue([mockModel1, mockModel2]);
+
+    const notifyFn = vi.fn();
+    const manager = new CommandManager(mockPi as any);
+    await manager.initialize();
+    await manager.run("unload", {
+      ui: { notify: notifyFn },
+    } as any);
+
+    expect(mockModel1.unload).toHaveBeenCalled();
+    expect(mockModel2.unload).toHaveBeenCalled();
     expect(notifyFn).toHaveBeenCalledWith(
-      "Model info for test-model",
+      "Unloaded all Llama.cpp models",
       "info",
     );
-    expect(listModels).toHaveBeenCalledOnce();
   });
 
   it("should dispatch modelsCommand when args is empty", async () => {
