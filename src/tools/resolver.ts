@@ -8,7 +8,25 @@ import {
 import { AuthFile } from "../interfaces/auth";
 
 // The URL is detected once, to reuse forever
-let resolvedUrl: string | undefined;
+type ResolvedUrl = Readonly<{ url: string; warning: string | null }>;
+type MaybeResolvedUrl = Readonly<{ url: string | null; warning: string | null }>;
+
+let resolvedUrl: ResolvedUrl | undefined;
+
+const resolveHomeDir = (): { home: string; warning: string | null } => {
+  const home =
+    process.env.HOME || // Works on Linux and MacOS, returns undefined on Windows
+    process.env.USERPROFILE || // Windows compatibility
+    "."; // fallback to CWD
+
+  return {
+    home,
+    warning:
+      home == "."
+        ? "User home directory not found. Falling back to current directory. This may indicate an issue with your environment configuration."
+        : null,
+  };
+};
 
 /**
  * Detects if a particular file is present
@@ -59,7 +77,8 @@ const readConfigValue = async <T>(
  * @returns The API key, as defined by the auth.json file
  */
 export const resolveApiKey = async (): Promise<string> => {
-  const authPath = join(process.env.HOME || ".", ".pi", "agent", "auth.json");
+  const { home } = resolveHomeDir();
+  const authPath = join(home, ".pi", "agent", "auth.json");
   if (!(await fileExists(authPath))) return API_KEY_PLACEHOLDER;
 
   const cfg = await readConfigValue<AuthFile>(authPath, PROVIDER_ID);
@@ -70,17 +89,23 @@ export const resolveApiKey = async (): Promise<string> => {
  * Resolves the llama-server url by searching for it in the global settings.json file
  * @returns The URL, if found.
  */
-const resolveGlobalUrl = async (): Promise<string | null> => {
+const resolveGlobalUrl = async (): Promise<MaybeResolvedUrl> => {
+  const { home, warning } = resolveHomeDir();
+
   const globalPath = join(
-    process.env.HOME || ".",
+    home,
     ".pi",
     "agent",
     "settings.json",
   );
 
-  if (!(await fileExists(globalPath))) return null;
+  if (!(await fileExists(globalPath))) return { url: null, warning };
 
-  return readConfigValue<Record<string, string>>(globalPath, "llamaServerUrl");
+  const url = await readConfigValue<Record<string, string>>(
+    globalPath,
+    "llamaServerUrl",
+  );
+  return { url, warning };
 };
 
 /**
@@ -108,21 +133,21 @@ const resolveEnvUrl = async (): Promise<string | null> => {
  * @param cwd The current working directory
  * @returns The URL, or a default if not found
  */
-const resolveUrlWithFallbacks = async (cwd: string): Promise<string> => {
+const resolveUrlWithFallbacks = async (cwd: string): Promise<ResolvedUrl> => {
   // 1. per-project config
   let response = await resolveProjectUrl(cwd);
-  if (response) return response;
+  if (response) return { url: response, warning: null };
 
   // 2. env
   response = await resolveEnvUrl();
-  if (response) return response;
+  if (response) return { url: response, warning: null };
 
   // 3. global settings: ~/.pi/agent/settings.json
-  response = await resolveGlobalUrl();
-  if (response) return response;
+  const { url: globalUrl, warning } = await resolveGlobalUrl();
+  if (globalUrl) return { url: globalUrl, warning };
 
   // 4. default
-  return DEFAULT_LLAMA_SERVER_URL;
+  return { url: DEFAULT_LLAMA_SERVER_URL, warning };
 };
 
 /**
@@ -130,12 +155,12 @@ const resolveUrlWithFallbacks = async (cwd: string): Promise<string> => {
  * @param cwd The current working directory
  * @returns The URL, or a default if not found
  */
-export const resolveUrl = async (cwd: string): Promise<string> => {
+export const resolveUrl = async (cwd: string): Promise<ResolvedUrl> => {
   if (resolvedUrl) return resolvedUrl;
   const result = await resolveUrlWithFallbacks(cwd);
 
   // Strip trailing slashes
-  resolvedUrl = result.replace(/\/+$/, "");
+  resolvedUrl = { ...result, url: result.url.replace(/\/+$/, "") };
 
   return resolvedUrl;
 };

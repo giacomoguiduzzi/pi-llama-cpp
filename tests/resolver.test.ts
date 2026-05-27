@@ -25,7 +25,7 @@ describe("URL resolution fallback chain", () => {
     const { resolveUrl } = await import("../src/tools/resolver");
     const result = await resolveUrl("/tmp/test-project");
 
-    expect(result).toBe(DEFAULT_LLAMA_SERVER_URL);
+    expect(result).toEqual({ url: DEFAULT_LLAMA_SERVER_URL, warning: null });
   });
 
   it("should prioritize project config over env variable", async () => {
@@ -45,7 +45,7 @@ describe("URL resolution fallback chain", () => {
     const { resolveUrl } = await import("../src/tools/resolver");
     const result = await resolveUrl("/tmp/test-project");
 
-    expect(result).toBe("http://localhost:9999");
+    expect(result).toEqual({ url: "http://localhost:9999", warning: null });
   });
 
   it("should use env variable when no project config exists", async () => {
@@ -60,7 +60,7 @@ describe("URL resolution fallback chain", () => {
     const { resolveUrl } = await import("../src/tools/resolver");
     const result = await resolveUrl("/tmp/test-project");
 
-    expect(result).toBe("http://env-url:8080");
+    expect(result).toEqual({ url: "http://env-url:8080", warning: null });
   });
 
   it("should use global settings when no project config or env exists", async () => {
@@ -80,7 +80,7 @@ describe("URL resolution fallback chain", () => {
     const { resolveUrl } = await import("../src/tools/resolver");
     const result = await resolveUrl("/tmp/test-project");
 
-    expect(result).toBe("http://global:8080");
+    expect(result).toEqual({ url: "http://global:8080", warning: null });
   });
 
   it("should strip trailing slashes from resolved URL", async () => {
@@ -98,7 +98,34 @@ describe("URL resolution fallback chain", () => {
     const { resolveUrl } = await import("../src/tools/resolver");
     const result = await resolveUrl("/tmp/test-project");
 
-    expect(result).toBe("http://localhost:8080");
+    expect(result).toEqual({ url: "http://localhost:8080", warning: null });
+  });
+
+  it("should return a warning when falling back to current directory for global settings", async () => {
+    vi.doMock("node:fs/promises", () => ({
+      access: vi.fn().mockImplementation(async (path: string) => {
+        if (path.includes("settings.json")) return undefined;
+        throw new Error("ENOENT");
+      }),
+      constants: { F_OK: 0 },
+      readFile: vi
+        .fn()
+        .mockResolvedValue(
+          JSON.stringify({ llamaServerUrl: "http://global:8080" }),
+        ),
+    }));
+
+    delete process.env.HOME;
+    delete process.env.USERPROFILE;
+
+    const { resolveUrl } = await import("../src/tools/resolver");
+    const result = await resolveUrl("/tmp/test-project");
+
+    expect(result).toEqual({
+      url: "http://global:8080",
+      warning:
+        "User home directory not found. Falling back to current directory. This may indicate an issue with your environment configuration.",
+    });
   });
 });
 

@@ -152,7 +152,10 @@ const modelSelectionHandler = async (
 export const notFoundCommand = async (
   ctx: ExtensionCommandContext,
 ): Promise<void> => {
-  const url = await resolveUrl(ctx.cwd);
+  const { url, warning } = await resolveUrl(ctx.cwd);
+  if (warning) {
+    ctx.ui.notify(warning, "warning");
+  }
   ctx.ui.notify(`${PROVIDER_NAME} unreachable at ${url}`, "error");
 };
 

@@ -23,7 +23,10 @@ const mockPi = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  (resolveUrl as any).mockResolvedValue("http://127.0.0.1:8080");
+  (resolveUrl as any).mockResolvedValue({
+    url: "http://127.0.0.1:8080",
+    warning: null,
+  });
   (resolveApiKey as any).mockResolvedValue("test-key");
 });
 
@@ -70,11 +73,29 @@ describe("CommandManager", () => {
 
   it("should call notFoundCommand when server is not ready in run()", async () => {
     (isServerReady as any).mockResolvedValue(false);
+    (resolveUrl as any).mockResolvedValueOnce({
+      url: "http://127.0.0.1:8080",
+      warning:
+        "User home directory not found. Falling back to current directory. This may indicate an issue with your environment configuration.",
+    });
 
+    const notifyFn = vi.fn();
     const manager = new CommandManager(mockPi as any);
-    await manager.run("", { ui: { notify: vi.fn() } } as any);
+    await manager.run(
+      "",
+      { cwd: "/tmp/test-project", ui: { notify: notifyFn } } as any,
+    );
 
     expect(mockPi.registerProvider).not.toHaveBeenCalled();
+    expect(resolveUrl).toHaveBeenCalledWith(expect.any(String));
+    expect(notifyFn).toHaveBeenCalledWith(
+      "User home directory not found. Falling back to current directory. This may indicate an issue with your environment configuration.",
+      "warning",
+    );
+    expect(notifyFn).toHaveBeenCalledWith(
+      "Llama.cpp unreachable at http://127.0.0.1:8080",
+      "error",
+    );
   });
 
   it("should show info for all models when args is 'info'", async () => {

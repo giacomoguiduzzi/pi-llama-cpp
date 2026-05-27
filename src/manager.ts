@@ -34,7 +34,8 @@ export class CommandManager {
    * Ensures the models are up-to-date with the server
    */
   async update() {
-    this.baseUrl = `${await resolveUrl(process.cwd())}`;
+    const { url: baseUrl } = await resolveUrl(process.cwd());
+    this.baseUrl = `${baseUrl}`;
 
     this.serverModels = await listModels();
     const modelConfigs = await Promise.all(

@@ -29,7 +29,7 @@ export const rpc = async <T>(
   endpoint: string,
   body?: Record<string, unknown>,
 ): Promise<T> => {
-  const base = await resolveUrl(process.cwd());
+  const { url: base } = await resolveUrl(process.cwd());
   const url = `${base}${endpoint}`;
 
   const data = {
